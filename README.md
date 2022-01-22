@@ -3,7 +3,9 @@
 ## Exam Rank 02
 
 - Grades: 100%
+- `ft_printf` _version Nov 2021_ (requires width & precision modifiers)
 - _Not original work from the exam, just a replica_
+- `get_next_line` was a solution shared to cheese the _Nov 2021 version_. It's not applicable anymore, just keeping it for memories
 
 ## Exam Rank 03
 
