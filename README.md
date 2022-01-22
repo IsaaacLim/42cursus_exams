@@ -15,3 +15,4 @@
 ## Exam Rank 04
 
 - Grades: 100%
+- _Could've done it in a less complicated way_
