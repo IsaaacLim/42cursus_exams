@@ -1,11 +1,25 @@
 #include "microshell.h"
 
+/*
+** Method used:
+**	- For argv between ";"
+**		1. Copy argv between "|" into separate arr[n][]
+**		2. Execute the copied argv
+**		3. Free all allocated memory & set variables to NULL to be reused
+**
+** After exam thoughts:
+**	- Could've used only t_list that contains a char ***args, rather than t_args *args
+**	- Copying the input argv wasn't necessary. Could've directly passed the input argv to execve
+*/
+
+// (3b) set variables to NULL
 void ft_init_list(t_list *cmds)
 {
 	cmds->len = 0;
 	cmds->argv = NULL;
 }
 
+// (1b) Copy argv given that are between "|"
 char **ft_add_args(char **argv, int start, int end)
 {
 	char **tmp;
@@ -24,6 +38,7 @@ char **ft_add_args(char **argv, int start, int end)
 	return (tmp);
 }
 
+// (1a) Copy argv between "|" into separate arr[n][]
 void ft_parse(t_list *cmds, char **argv, int begin, int fin)
 {
 	int start;
@@ -61,9 +76,9 @@ void ft_parse(t_list *cmds, char **argv, int begin, int fin)
 				cmds->argv[i].args = ft_add_args(argv, start, end);
 		}
 	}
-
 }
 
+// (3a) Free all allocated memory
 void ft_clear(t_list *cmds)
 {
 	int i = 0;
@@ -75,7 +90,7 @@ void ft_clear(t_list *cmds)
 		j = 0;
 		while (cmds->argv[i].args[j])
 		{
-			//ft_putstr_fd(cmds->argv[i].args[j], 1); //tmp
+			//ft_putstr_fd(cmds->argv[i].args[j], 1); // print stored argv
 			//ft_putstr_fd(" ", 1); //tmp
 			free(cmds->argv[i].args[j]);
 			j++;
@@ -87,6 +102,7 @@ void ft_clear(t_list *cmds)
 		free(cmds->argv);
 }
 
+// (3b) Built-in "cd"
 int ft_cd(char **last_arg)
 {
 	if (strcmp("cd", last_arg[0]) != 0)
@@ -104,6 +120,7 @@ int ft_cd(char **last_arg)
 	return (1);
 }
 
+// (3c) Child process to call execve
 void ft_execve(char **args, char **envp)
 {
 	execve(args[0], args, envp);
@@ -113,6 +130,7 @@ void ft_execve(char **args, char **envp)
 	exit(127);
 }
 
+// (3a) Execute the copied argv
 int ft_execute(t_list cmds, char **envp)
 {
 	int child_status = 0;
@@ -134,9 +152,9 @@ int ft_execute(t_list cmds, char **envp)
 	i = 0;
 	while (i < cmds.len)
 	{
-		ft_dup2(fdnew[0], 0);
-		if (i == cmds.len -1)
-			fdnew[1] = dup(fdstd[1]);
+		ft_dup2(fdnew[0], 0);		  //1st cmd = STDIN, others = ftpipe[0] of prev cmd
+		if (i == cmds.len - 1)		  //redir_out
+			fdnew[1] = dup(fdstd[1]); //last cmd = STDOUT
 		else
 		{
 			if (pipe(fdpipe) == -1)
@@ -144,7 +162,7 @@ int ft_execute(t_list cmds, char **envp)
 			fdnew[0] = fdpipe[0];
 			fdnew[1] = fdpipe[1];
 		}
-		ft_dup2(fdnew[1], 1);
+		ft_dup2(fdnew[1], 1); //last cmd = STDOUT, others = fdpipe[1]
 		pid[i] = fork();
 		if (pid[i] == 0)
 			ft_execve(cmds.argv[i].args, envp);
@@ -159,8 +177,7 @@ int ft_execute(t_list cmds, char **envp)
 	return (WEXITSTATUS(child_status));
 }
 
-
-
+// Execve argv between ";" & repeat until !argv[i]
 int main(int argc, char *argv[], char **envp)
 {
 	int ret = 0;
@@ -193,13 +210,13 @@ int main(int argc, char *argv[], char **envp)
 			fin++;
 			if (!argv[fin])
 			{
-			//	ft_putstr_fd("\nNEW", 1); //tmp
+				//	ft_putstr_fd("\nNEW", 1); //tmp
 				ft_parse(&cmds, argv, begin, fin);
 				ret = ft_execute(cmds, envp);
 				ft_clear(&cmds);
 			}
 		}
 	}
-//	system("leaks a.out");
+	//	system("leaks a.out");
 	return ret;
 }
