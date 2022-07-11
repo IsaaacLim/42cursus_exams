@@ -1,4 +1,4 @@
-# 42cursus_exams
+# 42cursus_exams 👨‍💻
 
 ## Exam Rank 02
 
